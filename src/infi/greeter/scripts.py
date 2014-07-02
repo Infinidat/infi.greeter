@@ -1,5 +1,8 @@
 import os
 import click
+import traceback
+from infi.traceback import traceback_context
+
 
 @click.command()
 @click.argument('product')
@@ -8,7 +11,7 @@ import click
 @click.argument('status_program')
 @click.argument('login_program')
 @click.option('--terminfo', default='/lib/terminfo', help='terminfo directory')
-def main(product, version, log_path, status_program, login_program, terminfo):
+def greet(product, version, log_path, status_program, login_program, terminfo):
     """Runs a custom greeter screen.
 
     PRODUCT is the product name to display
@@ -21,11 +24,31 @@ def main(product, version, log_path, status_program, login_program, terminfo):
 
     LOGIN_PROGRAM is the program to exec when the user chooses LOGIN
     """
-    if 'TERMINFO' not in os.environ:
-        os.putenv('TERMINFO', terminfo)
-    from . import greet
-    return greet(product, version, log_path, status_program, login_program)
+    with traceback_context():
+        try:
+            if 'TERMINFO' not in os.environ:
+                os.putenv('TERMINFO', terminfo)
+            from . import greet
+            return greet(product, version, log_path, status_program, login_program)
+        except:
+            traceback.print_exc()
+            os._exit(1)
 
 
-if __name__ == '__main__':
-    main()
+@click.command()
+@click.argument('tty_dev')
+@click.argument('greeter_path')
+def install(tty_dev, greeter_path):
+    """Installs a greeter script for a specific tty.
+
+    TTY_DEV is the tty device to install on (tty1, tty2, etc.).
+
+    GREETER_PATH is a path to a greeter executable file (without arguments).
+    """
+    with traceback_context():
+        try:
+            from . import install
+            install(tty_dev, greeter_path)
+        except:
+            traceback.print_exc()
+            os._exit(1)
