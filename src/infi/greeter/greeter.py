@@ -34,7 +34,14 @@ class MainForm(npyscreen.ActionForm):
 
         log_widget = self.get_widget('log')
         log_widget.hidden = status
-        log_widget.values = lines
+
+        # A poor man's line wrapping.
+        line_width = log_widget.width - 6  # -6 is for the border and spacing.
+        wrapped_lines = []
+        for l in lines:
+            for i in range(0, len(l), line_width):
+                wrapped_lines.append(l[i:i + line_width])
+        log_widget.values = wrapped_lines
 
 
 class Greeter(npyscreen.NPSAppManaged):
