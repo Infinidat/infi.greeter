@@ -5,6 +5,11 @@ from subprocess import Popen, PIPE
 import npyscreen
 
 
+STATUS_OK = 'OK'
+STATUS_ERROR = 'ERROR'
+STATUS_SETUP = 'SETUP'
+
+
 # We override ActionForm to provide us Login & Refresh buttons (Login is the OK button, Refresh is the Cancel button)
 class MainForm(npyscreen.ActionForm):
     OK_BUTTON_TEXT = ' Login '
@@ -29,11 +34,12 @@ class MainForm(npyscreen.ActionForm):
         self.prefix_errors = []
 
         status_widget = self.get_widget('status')
-        status_widget.entry_widget.color = 'GOOD' if status else 'DANGER'
-        status_widget.value = 'OK' if status else 'ERROR'
+        enum_to_color = {STATUS_OK: 'GOOD', STATUS_ERROR: 'DANGER', STATUS_SETUP: 'DEFAULT'}
+        status_widget.entry_widget.color = enum_to_color[status]
+        status_widget.value = status
 
         log_widget = self.get_widget('log')
-        log_widget.hidden = status
+        log_widget.hidden = status != STATUS_ERROR
 
         # A poor man's line wrapping.
         line_width = log_widget.width - 6  # -6 is for the border and spacing.
@@ -45,11 +51,12 @@ class MainForm(npyscreen.ActionForm):
 
 
 class Greeter(npyscreen.NPSAppManaged):
-    def __init__(self, product_name, version, log_file_path, status_program, login_program):
+    def __init__(self, product_name, version, log_file_path, setup_status_program, status_program, login_program):
         super(Greeter, self).__init__()
         self.product_name = product_name
         self.version = version
         self.log_file_path = log_file_path
+        self.setup_status_program = setup_status_program
         self.status_program = status_program
         self.login_program = login_program
 
@@ -62,16 +69,12 @@ class Greeter(npyscreen.NPSAppManaged):
             return traceback.format_exc().split("\n")
 
     def get_status(self):
-        """returns (bool, list of error lines)"""
-        try:
-            args = shlex.split(self.status_program)
-            with open(os.devnull, 'w') as devnull:
-                p = Popen(args, stdin=devnull, stdout=PIPE, stderr=PIPE, close_fds=True, shell=False)
-                stdout, stderr = p.communicate()
-                exitcode = p.wait()
-            return exitcode == 0, ["Status command: " + repr(args), "Status stdout:"] + stdout.split("\n") + ["Status stderr:"] + stderr.split("\n")
-        except:
-            return False, ["Error executing status program:"] + traceback.format_exc().split("\n")
+        """returns (status_enum, list of error lines)"""
+        ok, err = self._exec_program(self.setup_status_program)
+        if not ok:
+            return STATUS_SETUP, []
+        ok, err = self._exec_program(self.status_program)
+        return STATUS_OK if ok else STATUS_ERROR, err
 
     def clear_and_restore_terminal(self):
         # We want to clear the screen and restore the terminal mode before execing the login program
@@ -113,10 +116,22 @@ class Greeter(npyscreen.NPSAppManaged):
 
     def get_form_data(self, prefix_errors=[]):
         status, status_output = self.get_status()
-        lines = prefix_errors + status_output + ([ "", "Log file:"] + self.load_log() if not status else [])
+        lines = prefix_errors + status_output
+        if status == STATUS_ERROR:
+            lines += [ "", "Log file:"] + self.load_log()
         return status, lines
 
     def onStart(self):
         form = self.create_form()
         self.registerForm("MAIN", form)
 
+    def _exec_program(self, program):
+        try:
+            args = shlex.split(program)
+            with open(os.devnull, 'w') as devnull:
+                p = Popen(args, stdin=devnull, stdout=PIPE, stderr=PIPE, close_fds=True, shell=False)
+                stdout, stderr = p.communicate()
+                exitcode = p.wait()
+            return exitcode == 0, ["Status command: " + repr(args), "Status stdout:"] + stdout.split("\n") + ["Status stderr:"] + stderr.split("\n")
+        except:
+            return False, ["Error executing program: " + repr(args)] + traceback.format_exc().split("\n")

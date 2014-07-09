@@ -6,8 +6,8 @@ import signal
 from .greeter import Greeter
 from .install import install
 
-def greet(product, version, log_path, status_program, login_program):
+def greet(product, version, log_path, is_installed_program, status_program, login_program):
     signal.signal(signal.SIGHUP, signal.SIG_IGN)
     signal.signal(signal.SIGINT, signal.SIG_IGN)
-    greeter = Greeter(product, version, log_path, status_program, login_program)
+    greeter = Greeter(product, version, log_path, is_installed_program, status_program, login_program)
     greeter.run()
