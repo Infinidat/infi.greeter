@@ -7,8 +7,8 @@ UBUNTU_UPSTART_JOB_FILE = \
 # This service maintains a getty on {tty} from the point the system is
 # started until it is shut down again.
 
-start on runlevel [23]
-stop on runlevel [!23]
+start on stopped rc RUNLEVEL=[2345]
+stop on runlevel [!2345]
 
 respawn
 exec /sbin/getty -8 38400 -n -i -l {path} {tty}
