@@ -70,11 +70,14 @@ class Greeter(npyscreen.NPSAppManaged):
 
     def get_status(self):
         """returns (status_enum, list of error lines)"""
-        ok, err = self._exec_program(self.setup_status_program)
+        ok, err = self._exec_program(self.status_program)
+        if ok:
+            return STATUS_OK, err
+
+        ok, _ = self._exec_program(self.setup_status_program)
         if not ok:
             return STATUS_SETUP, []
-        ok, err = self._exec_program(self.status_program)
-        return STATUS_OK if ok else STATUS_ERROR, err
+        return STATUS_ERROR, err
 
     def clear_and_restore_terminal(self):
         # We want to clear the screen and restore the terminal mode before execing the login program
