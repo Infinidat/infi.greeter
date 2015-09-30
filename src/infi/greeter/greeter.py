@@ -76,7 +76,7 @@ class Greeter(npyscreen.NPSAppManaged):
 
         ok, _ = self._exec_program(self.setup_status_program)
         if not ok:
-            return STATUS_SETUP, []
+            return STATUS_SETUP, ['Select "Refresh" and hit the Enter key to update the status']
         return STATUS_ERROR, err
 
     def clear_and_restore_terminal(self):
