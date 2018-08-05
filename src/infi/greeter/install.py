@@ -69,6 +69,11 @@ SendSIGHUP=yes
 
 # Unset locale for the console getty since the console has problems
 # displaying some internationalized messages.
+UnsetEnvironment=LANG LANGUAGE LC_CTYPE LC_NUMERIC LC_TIME LC_COLLATE LC_MONETARY LC_MESSAGES LC_PAPER LC_NAME LC_ADDRESS LC_TELEPHONE LC_MEASUREMENT LC_IDENTIFICATION
+
+[Install]
+WantedBy=getty.target
+DefaultInstance=tty1
 """
 
 
@@ -100,7 +105,7 @@ def install_on_ubuntu_14(tty_dev, greeter_path):
 
 def install_on_ubuntu_18(tty_dev, greeter_path):
     template = UBUNTU_SYSTEMD_JOB_FILE.format(tty=tty_dev, path=greeter_path)
-    job_path = "/etc/systemd/system/getty.target.wants/getty@{tty_dev}.service".format(tty_dev=tty_dev)
+    job_path = "/etc/systemd/system/getty@{tty_dev}.service".format(tty_dev=tty_dev)
     move_to_backup(job_path)
     with open(job_path, "w") as f:
         f.write(template)
