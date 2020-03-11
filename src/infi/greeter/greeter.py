@@ -133,7 +133,7 @@ class Greeter(npyscreen.NPSAppManaged):
             args = shlex.split(program)
             with open(os.devnull, 'w') as devnull:
                 p = Popen(args, stdin=devnull, stdout=PIPE, stderr=PIPE, close_fds=True, shell=False)
-                stdout, stderr = p.communicate()
+                stdout, stderr = (output.decode() for output in p.communicate())
                 exitcode = p.wait()
             return exitcode == 0, ["Status command: " + repr(args), "Status stdout:"] + stdout.split("\n") + ["Status stderr:"] + stderr.split("\n")
         except:
