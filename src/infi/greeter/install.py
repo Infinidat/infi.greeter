@@ -1,5 +1,5 @@
 import os
-import platform
+import distro
 
 UBUNTU_UPSTART_JOB_FILE = \
 """# {tty} - getty
@@ -78,7 +78,7 @@ DefaultInstance=tty1
 
 
 def install(tty_dev, greeter_path):
-    dist, version, nick = platform.dist()
+    dist, version, nick = distro.linux_distribution()
     if dist == 'Ubuntu':
         major, minor = (int(i) for i in version.split('.'))
         if 10 <= major < 18:
